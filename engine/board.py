@@ -6,15 +6,14 @@ COLUMNS = 'abcdefgh';
 BOARD_SIZE = 8
 
 import os
-from engine.pieces.make_piece import make_piece
-from engine.pieces.king import King
-from engine.pieces.pawn import Pawn
-import engine.utils as util
-import engine.move_generator as generator
+from pieces.make_piece import make_piece
+from pieces.king import King
+from pieces.pawn import Pawn
+import utils as util
 
 
 class Board:
-    def __init__ (self, position=INITAL_POSITION):
+    def __init__ (self, position=INITAL_POSITION, callback=lambda x: x):
         parts = position.split(',')
         self._turn = 'w' if len(parts) < 2 else parts[1].strip()
         piece_strings = parts[0].split()
@@ -22,6 +21,7 @@ class Board:
         self._last_move = None if len(parts) < 3 else parts[2].strip()
         self._history = []
         self._previous = None
+        self._callback = callback
 
     def __str__ (self):
         def displayRow(rowNumber):
@@ -35,7 +35,7 @@ class Board:
             mat = list(map(displayCell, COLUMNS))
             return ' | '.join(mat)
 
-        os.system('clear')
+        # os.system('clear')
         mat = list(map(displayRow, range(BOARD_SIZE)))
         return '\n\n'.join(mat)
 
@@ -79,14 +79,16 @@ class Board:
             raise ValueError('First square is not a valid square')
         elif not util.valid_square(parts[1]) and not is_special:
             raise ValueError('Second square is not a valid square')
-        elif not is_special and not self.piece_on(parts[0])._color:
+        elif not is_special and not self.piece_on(parts[0]):
             raise ValueError('No piece on square')
         elif not is_special and self.piece_on(parts[0])._color != self.turn():
             raise ValueError('Cannot move opponents piece silly')
-        elif not move_string in generator.moves(self):
+        elif not move_string in self.moves():
             raise ValueError('Illegal move.')
         else:
             self.make_move(move_string)
+            if len(self.moves()) < 1:
+                self._callback('Game Over')
 
     def make_move(self, move_string):
         """
@@ -139,6 +141,51 @@ class Board:
             piece.move(move[1])
         self.switch_turn()
         self.last(move_string, state)
+
+    def moves(self):
+        main_board = self
+        pieces = main_board.get_pieces(lambda p: p._color == main_board.turn())
+        move_mat = list(map(lambda p: p.moves(main_board), pieces))
+        moves = [x for y in move_mat for x in y]
+
+        # Make the move; Check if the move is moving the king into check; undo move
+        removeables = []
+        for move in moves:
+            cloned_board = main_board.duplicate()
+            cloned_board.make_move(move)
+            cloned_king = cloned_board.get_piece(lambda p: p._color == main_board.turn() and isinstance(p, King))
+
+            king_square = cloned_king._square
+            king_row = king_square[1]
+
+            for opp_move_str in self.moves_without_check_validation(cloned_board):
+                opp_move = opp_move_str.split()
+                if opp_move[1] == king_square and move in moves:
+                    removeables.append(move)
+                    break
+
+                # Cannot castle through check or from check
+                if move == '0 0':
+                    if opp_move[1] == 'e{}'.format(king_row) or opp_move[1] == 'f{}'.format(king_row):
+                        removeables.append(move)
+                        break
+
+                if move == '0 0 0':
+                    if opp_move[1] == 'e{}'.format(king_row) or opp_move[1] == 'd{}'.format(king_row) or opp_move[1] == 'c{}'.format(king_row):
+                        removeables.append(move)
+                        break
+
+        for move in removeables:
+            moves.remove(move)
+
+        return moves
+
+    @staticmethod
+    def moves_without_check_validation(board):
+        pieces = board.get_pieces(lambda p: p._color == board.turn())
+        move_mat = list(map(lambda p: p.moves(board), pieces))
+        return [x for y in move_mat for x in y]
+
 
     def get_pieces(self, fn):
         return list(filter(fn, self._pieces))

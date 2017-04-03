@@ -1,4 +1,4 @@
-Validation Front End
+Queen promotion
 
 Checkmate
 Stale mate

@@ -1,6 +1,6 @@
 from .piece import Piece
 from .rook import Rook
-import engine.utils as util
+import utils as util
 
 class King(Piece):
     def __init__(self, color, square, moved):
@@ -47,7 +47,7 @@ class King(Piece):
                     moves.append('0 0')
 
             if (rook_left and rook_left._has_moved == False):
-                if not(board.piece_on('b{}'.format(square[1])) or board.piece_on('c{}'.format(square[1])) or board.get_piece('d{}'.format(square[1]))):
+                if not(board.piece_on('b{}'.format(square[1])) or board.piece_on('c{}'.format(square[1])) or board.piece_on('d{}'.format(square[1]))):
                     moves.append('0 0 0')
 
         return moves

@@ -1,2 +1,2 @@
-from engine.board import Board
-import engine.move_generator as generator
+from .board import Board
+from . import move_generator as generator

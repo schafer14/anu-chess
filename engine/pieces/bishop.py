@@ -1,5 +1,5 @@
 from .piece import Piece
-import engine.utils as util
+import utils as util
 
 class Bishop(Piece):
     def __init__(self, color, square, moved):
