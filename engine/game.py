@@ -49,34 +49,34 @@ class Game():
 
     def cli(self):
         print(self)
-        while self._continue:
-            turn = self.board.turn()
-            if self.players[turn]['agent_type'] != 'bot':
-                move = input("Please enter a move: ")
-                if move == 'q' or move == 'quit':
-                    break;
-                elif move == 'p' or move == 'print':
-                    print(self.board.serialize())
-                elif move == 'h' or move == 'help':
-                    print('Getting Moves')
-                    print(self.board.moves())
-                elif move == 'u' or move == 'undo':
-                    self.board = self.board.undo()
-                    print(self.board)
-                else:
-                    # try:
-                        self.board.move(move)
-                        print(self)
-                    # except:
-                    #     print('An error occured:', sys.exc_info()[1])
-                    #     print(sys.exc_info()[2])
-            else:
-                move = self.players[turn]['strategy'].move(self.board)
-                try:
-                    self.board.move(move)
-                    print(self)
-                except:
-                    print('An error occured:', sys.exc_info()[1])
+        # while self._continue:
+        #     turn = self.board.turn()
+        #     if self.players[turn]['agent_type'] != 'bot':
+        #         move = input("Please enter a move: ")
+        #         if move == 'q' or move == 'quit':
+        #             break;
+        #         elif move == 'p' or move == 'print':
+        #             print(self.board.serialize())
+        #         elif move == 'h' or move == 'help':
+        #             print('Getting Moves')
+        #             print(self.board.moves())
+        #         elif move == 'u' or move == 'undo':
+        #             self.board = self.board.undo()
+        #             print(self.board)
+        #         else:
+        #             # try:
+        #                 self.board.move(move)
+        #                 print(self)
+        #             # except:
+        #             #     print('An error occured:', sys.exc_info()[1])
+        #             #     print(sys.exc_info()[2])
+        #     else:
+        #         move = self.players[turn]['strategy'].move(self.board)
+        #         try:
+        #             self.board.move(move)
+        #             print(self)
+        #         except:
+        #             print('An error occured:', sys.exc_info()[1])
 
         print('Game Over!')
 

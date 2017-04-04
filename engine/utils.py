@@ -1,5 +1,8 @@
 COLUMNS = 'abcdefgh';
 
+
+
+
 def mat_to_square(mat):
     (x, y) = mat
     col = COLUMNS[x - 1]
@@ -17,9 +20,6 @@ def square_to_mat(square):
 def valid_mat(mat):
     (x, y) = mat
     return x > 0 and x <= 8 and y > 0 and y <= 8
-
-def valid_square(square):
-    return square[0] in COLUMNS and int(square[1]) > 0 and int(square[1]) <= 8
 
 def expand_in_directions(board, square, directions, color):
     (x, y) = square_to_mat(square)

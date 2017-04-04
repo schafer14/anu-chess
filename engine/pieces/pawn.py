@@ -9,18 +9,18 @@ class Pawn(Piece):
         return '♙' if self._color == 'b' else '♟'
 
     def moves(self, board):
-        (x, y) = util.square_to_mat(self._square)
+        (x, y) = self._square
         direction = 1 if self._color == 'w' else -1
         moves = []
 
         # Straights
-        straight_1 = util.mat_to_square((x, y + (direction)))
-        straight_2 = util.mat_to_square((x, y + (2 * direction)))
+        straight_1 = (x, y + (direction))
+        straight_2 = (x, y + (2 * direction))
 
-        if (board.piece_on(straight_1) == None and util.valid_square(straight_1)):
+        if (board.piece_on(straight_1) == None and util.valid_mat(straight_1)):
             moves.append(straight_1)
 
-        if (board.piece_on(straight_2) == None and self._has_moved == False and util.valid_square(straight_2)):
+        if (board.piece_on(straight_2) == None and self._has_moved == False and util.valid_mat(straight_2)):
             moves.append(straight_2)
 
         # Captures
@@ -28,16 +28,14 @@ class Pawn(Piece):
         capture_2 = (x - 1, y + direction)
 
         if (util.valid_mat(capture_1)):
-            square = util.mat_to_square(capture_1)
-            if (board.piece_on(square)
-                and board.piece_on(square) != self._color):
-                    moves.append(square)
+            if (board.piece_on(capture_1)
+                and board.piece_on(capture_1) != self._color):
+                    moves.append(capture_1)
 
         if (util.valid_mat(capture_2)):
-            square = util.mat_to_square(capture_2)
-            if (board.piece_on(square)
-                and board.piece_on(square) != self._color):
-                    moves.append(square)
+            if (board.piece_on(capture_2)
+                and board.piece_on(capture_2) != self._color):
+                    moves.append(capture_2)
 
 
         # En passent
@@ -45,40 +43,38 @@ class Pawn(Piece):
         en_passent_2 = (x - 1, y)
 
         if (util.valid_mat(en_passent_1) and board._last_move):
-            square = util.mat_to_square(en_passent_1)
-            result_square = util.mat_to_square((x + 1, y + direction))
+            result_square = (x + 1, y + direction)
             last_move = board._last_move.split()
-            if (last_move[1] == square):
-                opponent = board.piece_on(square)
+            if (last_move[1] == en_passent_1):
+                opponent = board.piece_on(en_passent_1)
                 if (isinstance(opponent, Pawn)):
                     if (abs(int(last_move[0][1]) - int(last_move[1][1])) == 2):
                         moves.append(result_square)
 
         if (util.valid_mat(en_passent_2) and board._last_move):
-            square = util.mat_to_square(en_passent_2)
-            result_square = util.mat_to_square((x - 1, y + direction))
+            result_square = (x - 1, y + direction)
             last_move = board._last_move.split()
-            if (last_move[1] == square):
-                opponent = board.piece_on(square)
+            if (last_move[1] == en_passent_2):
+                opponent = board.piece_on(en_passent_2)
                 if (isinstance(opponent, Pawn)):
                     if (abs(int(last_move[0][1]) - int(last_move[1][1])) == 2):
                         moves.append(result_square)
 
-        full_moves = list(map(lambda m: '{} {}'.format(self._square, m), moves))
+        full_moves = [(self._square, m) for m in moves]
 
-        # Promotion
-        promotion_squares = []
-        for move in full_moves:
-            parts = move.split()
-            if int(parts[1][1]) == 0 or int(parts[1][1]) == 8:
-                full_moves.remove(move)
-                promotion_squares.append(move)
+        # # Promotion
+        # promotion_squares = []
+        # for move in full_moves:
+        #     parts = move.split()
+        #     if int(parts[1][1]) == 0 or int(parts[1][1]) == 8:
+        #         full_moves.remove(move)
+        #         promotion_squares.append(move)
 
-        for move in promotion_squares:
-            full_moves.append(move + ' q')
-            full_moves.append(move + ' r')
-            full_moves.append(move + ' b')
-            full_moves.append(move + ' n')
+        # for move in promotion_squares:
+        #     full_moves.append(move + ' q')
+        #     full_moves.append(move + ' r')
+        #     full_moves.append(move + ' b')
+        #     full_moves.append(move + ' n')
 
         return full_moves
 

@@ -10,6 +10,7 @@ from pieces.make_piece import make_piece
 from pieces.king import King
 from pieces.pawn import Pawn
 import utils as util
+import cProfile
 
 
 class Board:
@@ -24,23 +25,32 @@ class Board:
         self._callback = callback
 
     def __str__ (self):
-        def displayRow(rowNumber):
-            row = BOARD_SIZE-rowNumber
-            pieces = list(filter(lambda p: p.on_row(row), self._pieces))
+        rge = range(1, BOARD_SIZE + 1)
+        pieceMap = {};
 
-            def displayCell(column):
-                piece = list(filter(lambda p: p.on_column(column), pieces))
-                return ' ' if len(piece) == 0 else piece[0].__str__()
+        # Pull out pieces into map first to make time complexity O(p + size ** 2)
+        for piece in self._pieces:
+            pieceMap[piece._square] = piece
 
-            mat = list(map(displayCell, COLUMNS))
-            return ' | '.join(mat)
+        squares = pieceMap.keys()
+        result = ''
 
-        # os.system('clear')
-        mat = list(map(displayRow, range(BOARD_SIZE)))
-        return '\n\n'.join(mat)
+        # Go through row first for printing to console
+        for row in rge:
+            for col in rge:
+                if (col, row) in squares:
+                    result += ' ' + pieceMap[(col, row)].__str__() + ' '
+                else:
+                    result += ' '
+
+            if row != BOARD_SIZE:
+                result += '\n\n'
+
+        return result
+
 
     def serialize(self):
-        string = list(map(lambda p: p.print(), self._pieces))
+        string = [p.print() for p in self._pieces]
         last_move = '' if self._last_move == None else ', ' + self._last_move
         move = ', ' + self._turn
         return ' '.join(string) + move + last_move
@@ -97,88 +107,14 @@ class Board:
 
             Returns (capture, [moved_pieces])
         """
-        state = self.serialize()
-        move = move_string.split()
-        king_row = 1 if self.turn() == 'w' else BOARD_SIZE
 
-        # First check castling because it's a little special
-        if move_string == '0 0':
-            king = self.piece_on('e{}'.format(king_row))
-            rook = self.piece_on('h{}'.format(king_row))
-
-            king.move('g{}'.format(king_row))
-            rook.move('f{}'.format(king_row))
-
-        # Castling Queen Side
-        elif move_string == '0 0 0':
-            king = self.piece_on('e{}'.format(king_row))
-            rook = self.piece_on('a{}'.format(king_row))
-
-            king.move('c{}'.format(king_row))
-            rook.move('d{}'.format(king_row))
-
-        # Any other move will actually use the squares specified in the move_stirng
-        else:
-            piece = self.piece_on(move[0])
-            old_piece = self.piece_on(move[1])
-
-            if old_piece:
-                self.remove_piece(old_piece)
-
-            # Check for en passent
-            if isinstance(piece, Pawn) and move[0][0] != move[1][0] and not old_piece:
-                direction = 1 if self.turn() == 'w' else -1
-                taken_square = (move[1][0]) + str(int(move[1][1]) - direction)
-                old_piece = self.piece_on(taken_square)
-                self.remove_piece(old_piece)
-
-            # Check to see if the piece was promoted
-            if len(move) > 2:
-                self.pieces.remove(piece)
-                new_piece = make_piece('{}{}{}'.format(move[2], self.turn, move[1]))
-                self.pieces.append(new_piece)
-
-            piece.move(move[1])
-        self.switch_turn()
-        self.last(move_string, state)
 
     def moves(self):
-        main_board = self
-        pieces = main_board.get_pieces(lambda p: p._color == main_board.turn())
-        move_mat = list(map(lambda p: p.moves(main_board), pieces))
-        moves = [x for y in move_mat for x in y]
-
-        # Make the move; Check if the move is moving the king into check; undo move
-        removeables = []
-        for move in moves:
-            cloned_board = main_board.duplicate()
-            cloned_board.make_move(move)
-            cloned_king = cloned_board.get_piece(lambda p: p._color == main_board.turn() and isinstance(p, King))
-
-            king_square = cloned_king._square
-            king_row = king_square[1]
-
-            for opp_move_str in self.moves_without_check_validation(cloned_board):
-                opp_move = opp_move_str.split()
-                if opp_move[1] == king_square and move in moves:
-                    removeables.append(move)
-                    break
-
-                # Cannot castle through check or from check
-                if move == '0 0':
-                    if opp_move[1] == 'e{}'.format(king_row) or opp_move[1] == 'f{}'.format(king_row):
-                        removeables.append(move)
-                        break
-
-                if move == '0 0 0':
-                    if opp_move[1] == 'e{}'.format(king_row) or opp_move[1] == 'd{}'.format(king_row) or opp_move[1] == 'c{}'.format(king_row):
-                        removeables.append(move)
-                        break
-
-        for move in removeables:
-            moves.remove(move)
-
-        return moves
+        """
+            Returns a list of valid moves
+        """
+        deepArray = [piece.moves(self) for piece in self._pieces if piece._color == self._turn]
+        return [item for sublist in deepArray for item in sublist]
 
     @staticmethod
     def moves_without_check_validation(board):
@@ -188,7 +124,7 @@ class Board:
 
 
     def get_pieces(self, fn):
-        return list(filter(fn, self._pieces))
+        return [x for x in self._pieces if fn(x)]
 
     def get_piece(self, fn):
         pieces = self.get_pieces(fn)
@@ -212,3 +148,9 @@ class Board:
     def duplicate(self):
         state = self.serialize()
         return Board(state)
+
+if __name__ == "__main__":
+    board = Board('pwa2 pwb2 pwc2 pwd2 pwe2 pwf2 pwg2 pwh2 pba7 pbb7 pbc7 pbd7 pbe7 pbf7 pbg7 pbh7 ')
+    print(board)
+    # print(board.moves())
+

@@ -1,10 +1,12 @@
+import utils as util
+
 COLUMNS = 'abcdefgh'
 
 class Piece():
     def __init__(self, color, square, symbol, has_moved = False):
         self._has_moved = has_moved
         self._color = color
-        self._square = square
+        self._square = util.square_to_mat(square)
         self._symbol = symbol
 
     def __str__(self):
@@ -12,7 +14,7 @@ class Piece():
 
     def print(self):
         moved = 'm' if self._has_moved else ''
-        return '{}{}{}{}'.format(self._symbol, self._color, self._square, moved)
+        return '{}{}{}{}'.format(self._symbol, self._color, util.mat_to_square(self._square), moved)
 
     def moves(self, board):
         return [];
